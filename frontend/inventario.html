@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Ferretería - Gestión de Inventario</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #1e4a6b, #2c7da0); color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .header h1 { margin-bottom: 0; }
+        .nav-links { display: flex; gap: 1rem; }
+        .nav-links a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #d4e8f0; }
+        .card-title { font-size: 1.3rem; margin-bottom: 1rem; color: #2c7da0; border-left: 4px solid #2c7da0; padding-left: 1rem; }
+        .btn { background: #2c7da0; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin: 0.25rem; }
+        .btn-success { background: #2c7da0; }
+        .btn-danger { background: #c0392b; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #d4e8f0; }
+        th { background: #1e4a6b; color: white; }
+        input, select { padding: 0.5rem; border: 1px solid #b8d4e8; border-radius: 4px; width: 100%; background: #fffafa; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.3rem; font-weight: 600; color: white; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .user-info { background: #f0f4f8; padding: 0.5rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .admin-only { display: none; }
+        .producto-item { padding: 0.5rem; border-bottom: 1px solid #d4e8f0; cursor: pointer; background: white; }
+        .producto-item:hover { background: #f0f4f8; }
+        .detalle-item { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; padding: 0.5rem; background: #f0f4f8; border-radius: 8px; }
+        .resultados-box { border: 1px solid #b8d4e8; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; background: white; border-radius: 6px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; }
+        .flex-row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+        .flex-1 { flex: 1; }
+        .flex-2 { flex: 2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Ferretería - Gestión de Inventario</h1>
+            <div class="nav-links">
+                <a href="/">🏠 Inicio</a>
+                <a onclick="cargarDatos()">🔄 Actualizar</a>
+                <a onclick="mostrarFormNuevoProducto()" style="background:#2c7da0;">➕ Nuevo Producto</a>
+            </div>
+        </div>
+        <div id="userInfo" class="user-info"></div>
+
+        <div class="grid-2">
+            <div class="card"><div class="card-title">📊 Resumen de Inventario</div><div id="resumen">Cargando...</div></div>
+            <div class="card"><div class="card-title">⚠️ Alertas de Stock</div><div id="alertas">Cargando...</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">➕ Registrar Compra</div>
+            <div class="form-group"><label>Proveedor:</label><select id="proveedor" style="width: 300px;"></select><button class="btn" onclick="abrirModalProveedor()">+ Nuevo</button></div>
+            <div class="form-group"><label>Buscar Producto:</label><input type="text" id="buscarProducto" placeholder="Nombre..." onkeyup="buscarProductos()"><div id="resultadosBusqueda" class="resultados-box"></div></div>
+            <div id="detallesCompra"></div>
+            <button class="btn btn-success" onclick="guardarCompra()">✅ Guardar Compra</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📤 Registrar Salida</div>
+            <div class="flex-row">
+                <div class="flex-2"><label>Producto:</label><select id="productoSalida"></select></div>
+                <div class="flex-1"><label>Cantidad:</label><input type="number" id="cantidadSalida" value="1" min="1"></div>
+                <div class="flex-1"><label>Tipo:</label><select id="tipoSalida"><option value="AJUSTE_NEG">Ajuste Negativo</option><option value="MERMA">Merma</option></select></div>
+                <div class="flex-2"><label>Observaciones:</label><input type="text" id="salidaObservaciones" placeholder="Motivo"></div>
+                <div><button class="btn btn-warning" onclick="registrarSalida()">📤 Registrar Salida</button></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📋 Productos</div>
+            <div class="form-group"><input type="text" id="buscarProductoTabla" placeholder="Filtrar..." onkeyup="cargarProductos()"></div>
+            <div class="table-container">
+                <table id="tablaProductos">
+                    <thead><tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Fragancia</th><th>Stock</th><th class="admin-only">Costo</th><th>Precio</th><th>Acciones</th></tr></thead>
+                    <tbody id="listaProductos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalProveedor" class="modal">
+        <div class="modal-content"><h3>➕ Nuevo Proveedor</h3><input type="text" id="provNit" placeholder="NIT"><input type="text" id="provNombre" placeholder="Nombre"><input type="text" id="provContacto" placeholder="Contacto"><input type="text" id="provTelefono" placeholder="Teléfono"><button class="btn btn-success" onclick="guardarProveedor()">Guardar</button><button class="btn" onclick="cerrarModalProveedor()">Cancelar</button></div>
+    </div>
+
+    <script>
+        let currentUser = null, productos = [], detallesCompra = [], tipos = [], fragancias = [];
+
+        function checkAuth() {
+            const saved = localStorage.getItem('user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                document.getElementById('userInfo').innerHTML = `👤 ${currentUser.nombre || currentUser.username} | Rol: ${currentUser.rol}`;
+                if (currentUser.rol === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+                cargarDatos();
+            } else { window.location.href = '/'; }
+        }
+
+        async function cargarDatos() { await cargarTipos(); await cargarFragancias(); await cargarResumen(); await cargarProductos(); await cargarProveedores(); await cargarProductosSalida(); }
+
+        async function cargarTipos() { try { const res = await fetch('/api/tipos'); tipos = await res.json(); } catch(e) { console.error(e); } }
+        async function cargarFragancias() { try { const res = await fetch('/api/fragancias'); fragancias = await res.json(); } catch(e) { console.error(e); } }
+                document.getElementById('alertas').innerHTML = `<p>🔴 Sin stock: ${data.sin_stock} | 🟡 Stock bajo: ${data.stock_bajo}</p>`;
+            } catch(e) { console.error(e); }
+        }
+        async function cargarProductos() { try { const res = await fetch('/api/productos'); productos = await res.json(); filtrarProductos(); } catch(e) { console.error(e); } }
+        function filtrarProductos() {
+            const busqueda = document.getElementById('buscarProductoTabla')?.value.toLowerCase() || '';
+            const filtered = productos.filter(p => p.nombre_producto.toLowerCase().includes(busqueda));
+            const tbody = document.getElementById('listaProductos');
+            tbody.innerHTML = filtered.map(p => `
+                <tr>
+                    <td>${p.codigo_barras || '-'}</td>
+                    <td>${p.nombre_producto}</td>
+                    <td>${p.nombre_tipo || '-'}</td>
+                    <td>${p.nombre_fragancia || '-'}</td>
+                    <td style="color:${p.stock_actual <= 5 ? '#c0392b' : '#2c7da0'}">${p.stock_actual}</td>
+                    ${currentUser?.rol === 'admin' ? `<td>$${(p.costo_promedio || 0).toFixed(2)}</td>` : ''}
+                    <td>$${p.precio_venta}</td>
+                    <td><button class="btn" onclick="editarProducto(${p.id_producto})">✏️</button><button class="btn btn-danger" onclick="eliminarProductoInventario(${p.id_producto})">🗑️</button></td>
+                </tr>
+            `).join('');
+        }
+        async function cargarProveedores() { try { const res = await fetch('/api/proveedores'); const proveedores = await res.json(); const select = document.getElementById('proveedor'); select.innerHTML = '<option value="">Seleccionar</option>'; proveedores.forEach(p => { select.innerHTML += `<option value="${p.id_proveedor}">${p.nombre_comercial}</option>`; }); } catch(e) { console.error(e); } }
+        async function cargarProductosSalida() { try { const res = await fetch('/api/productos'); const prods = await res.json(); const select = document.getElementById('productoSalida'); select.innerHTML = '<option value="">Seleccionar</option>'; prods.forEach(p => { select.innerHTML += `<option value="${p.id_producto}">${p.nombre_producto} (Stock: ${p.stock_actual})</option>`; }); } catch(e) { console.error(e); } }
+        function buscarProductos() {
+            const termino = document.getElementById('buscarProducto').value.toLowerCase();
+            const div = document.getElementById('resultadosBusqueda');
+            if (termino.length < 2) { div.innerHTML = ''; return; }
+            const filtrados = productos.filter(p => p.nombre_producto.toLowerCase().includes(termino));
+            if (filtrados.length === 0) { div.innerHTML = '<div>No encontrado</div>'; return; }
+            div.innerHTML = filtrados.slice(0, 10).map(p => `<div class="producto-item" onclick="agregarProducto(${p.id_producto}, '${p.nombre_producto}', ${p.costo_promedio || 0})">${p.nombre_producto} - $${p.costo_promedio || 0}</div>`).join('');
+        }
+        function agregarProducto(id, nombre, costo) {
+            const existente = detallesCompra.find(d => d.id === id);
+            if (existente) { existente.cantidad++; } else { detallesCompra.push({ id, nombre, cantidad: 1, costo }); }
+            renderDetalles();
+            document.getElementById('buscarProducto').value = '';
+            document.getElementById('resultadosBusqueda').innerHTML = '';
+        }
+        function renderDetalles() {
+            const div = document.getElementById('detallesCompra');
+            if (detallesCompra.length === 0) { div.innerHTML = ''; return; }
+            div.innerHTML = '<h4>Productos:</h4>';
+            detallesCompra.forEach((d, i) => { div.innerHTML += `<div class="detalle-item"><span>${d.nombre}</span><input type="number" value="${d.cantidad}" min="1" style="width:70px" onchange="actualizarCantidad(${i}, this.value)"><input type="number" value="${d.costo}" step="0.01" style="width:100px" onchange="actualizarCosto(${i}, this.value)"><button class="btn btn-danger" onclick="eliminarProductoCompra(${i})">❌</button></div>`; });
+        }
+        function actualizarCantidad(idx, val) { detallesCompra[idx].cantidad = parseInt(val); }
+        function actualizarCosto(idx, val) { detallesCompra[idx].costo = parseFloat(val); }
+        function eliminarProductoCompra(idx) { detallesCompra.splice(idx, 1); renderDetalles(); }
+        async function guardarCompra() {
+            const id_proveedor = document.getElementById('proveedor').value;
+            if (!id_proveedor) { alert('Seleccione proveedor'); return; }
+            if (detallesCompra.length === 0) { alert('Agregue productos'); return; }
+            const data = { id_proveedor: parseInt(id_proveedor), productos: detallesCompra.map(d => ({ id_producto: d.id, cantidad: d.cantidad, costo_unitario: d.costo })) };
+            try {
+                const res = await fetch('/api/compras', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (res.ok) { alert('✅ Compra registrada'); detallesCompra = []; renderDetalles(); cargarDatos(); }
+                else { alert('Error'); }
+            } catch(e) { alert('Error de conexión'); }
+        }
+        async function registrarSalida() {
+            const id_producto = document.getElementById('productoSalida').value;
+            const cantidad = parseInt(document.getElementById('cantidadSalida').value);
+            const tipo = document.getElementById('tipoSalida').value;
+            if (!id_producto) { alert('Seleccione producto'); return; }
+            const data = { id_producto: parseInt(id_producto), cantidad: cantidad, tipo_salida: tipo };
+            try {
+                const res = await fetch('/api/salidas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (res.ok) { alert('✅ Salida registrada'); cargarDatos(); }
+                else { alert('Error'); }
+            } catch(e) { alert('Error de conexión'); }
+        }
+        function abrirModalProveedor() { document.getElementById('modalProveedor').style.display = 'flex'; }
+        function cerrarModalProveedor() { document.getElementById('modalProveedor').style.display = 'none'; }
+        async function guardarProveedor() {
+            const data = { nit: document.getElementById('provNit').value, nombre_comercial: document.getElementById('provNombre').value };
+            if (!data.nit || !data.nombre_comercial) { alert('Complete datos'); return; }
+            try { const res = await fetch('/api/proveedores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); if (res.ok) { alert('Proveedor creado'); cerrarModalProveedor(); cargarProveedores(); } else { alert('Error'); } } catch(e) { alert('Error de conexión'); }
+        }
+        async function editarProducto(id) {
+            const prod = productos.find(p => p.id_producto === id);
+            if (!prod) return;
+            const nuevoNombre = prompt('✏️ Nombre:', prod.nombre_producto);
+            if (!nuevoNombre) return;
+            const nuevoPrecio = prompt('💰 Precio:', prod.precio_venta);
+            if (!nuevoPrecio) return;
+            const nuevoStock = prompt('📦 Stock:', prod.stock_actual);
+            if (!nuevoStock) return;
+            const nuevoCosto = prompt('📊 Costo:', prod.costo_promedio || 0);
+            if (!nuevoCosto) return;
+            const data = { codigo_barras: prod.codigo_barras, nombre_producto: nuevoNombre, id_tipo: prod.id_tipo, id_fragancia: prod.id_fragancia, precio_compra: parseFloat(nuevoCosto), precio_venta: parseFloat(nuevoPrecio), stock_actual: parseInt(nuevoStock), stock_minimo: prod.stock_minimo || 5 };
+            try { const res = await fetch(`/api/productos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); if (res.ok) { alert('✅ Actualizado'); cargarProductos(); cargarResumen(); cargarProductosSalida(); } else { alert('Error'); } } catch(e) { alert('Error de conexión'); }
+        }
+        async function eliminarProductoInventario(id) {
+            if (!confirm('¿Eliminar?')) return;
+            try { const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' }); if (res.ok) { alert('✅ Eliminado'); cargarProductos(); cargarResumen(); cargarProductosSalida(); } else { alert('Error'); } } catch(e) { alert('Error de conexión'); }
+        }
+        async function mostrarFormNuevoProducto() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '2000';
+            modal.innerHTML = `<div style="background: white; border-radius: 16px; padding: 2rem; width: 90%; max-width: 550px;"><h2 style="color: #2c7da0;">➕ Nuevo Producto</h2><div class="form-group"><label>Código:</label><input type="text" id="newCodigo" placeholder="Opcional"></div><div class="form-group"><label>Nombre:*</label><input type="text" id="newNombre"></div><div class="form-group"><label>Tipo:</label><select id="newTipo">${tipos.map(t => `<option value="${t.id_tipo}">${t.nombre_tipo}</option>`).join('')}</select></div><div class="form-group"><label>Fragancia:</label><select id="newFragancia">${fragancias.map(f => `<option value="${f.id_fragancia}">${f.nombre_fragancia}</option>`).join('')}</select></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Precio compra:</label><input type="number" step="0.01" id="newPrecioCompra" value="0"></div><div class="form-group"><label>Precio venta:</label><input type="number" step="0.01" id="newPrecioVenta" value="0"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Stock:</label><input type="number" id="newStock" value="0"></div><div class="form-group"><label>Stock mínimo:</label><input type="number" id="newStockMinimo" value="5"></div></div><div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1rem;"><button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancelar</button><button class="btn btn-success" onclick="guardarNuevoProducto(this)">Crear</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+        async function guardarNuevoProducto(btn) {
+            const modal = btn.closest('.modal-overlay');
+            const data = { codigo_barras: document.getElementById('newCodigo').value || null, nombre_producto: document.getElementById('newNombre').value, id_tipo: document.getElementById('newTipo').value || null, id_fragancia: document.getElementById('newFragancia').value || null, precio_compra: parseFloat(document.getElementById('newPrecioCompra').value), precio_venta: parseFloat(document.getElementById('newPrecioVenta').value), stock_actual: parseInt(document.getElementById('newStock').value), stock_minimo: parseInt(document.getElementById('newStockMinimo').value) };
+            if (!data.nombre_producto) { alert('Nombre requerido'); return; }
+            try { const res = await fetch('/api/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); if (res.ok) { alert('✅ Creado'); modal.remove(); cargarProductos(); cargarResumen(); cargarProductosSalida(); } else { alert('Error'); } } catch(e) { alert('Error de conexión'); }
+        }
+        checkAuth();
+    </script>
+<script src="js/editar_producto_shared.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+# Ignorar todo por defecto
+*
+
+# Permitir carpetas necesarias
+!backend/
+!frontend/
+!pyspark/
+!postgres/
+!swarm/
+
+# Permitir archivos raíz necesarios
+!docker-compose.yml
+!.gitignore
+!README.md
+
+# =========================
+# BACKEND
+# =========================
+!backend/Dockerfile
+!backend/server.js
+!backend/package.json
+!backend/package-lock.json
+
+# =========================
+# FRONTEND
+# =========================
+!frontend/Dockerfile
+!frontend/nginx.conf
+!frontend/index.html
+!frontend/inventario.html
+
+# =========================
+# PYSPARK
+# =========================
+!pyspark/Dockerfile
+!pyspark/jobs/
+!pyspark/jobs/analytics_masivo.py
+
+# =========================
+# POSTGRES
+# =========================
+!postgres/init.sql
+
+# =========================
+# SWARM
+# =========================
+!swarm/stack.yml
+
+# =========================
+# EXCLUSIONES EXPLÍCITAS
+# =========================
+
+# Node
+backend/node_modules/
+
+# Logs
+*.log
+logs/
+pyspark/logs/
+
+# Python
+__pycache__/
+*.pyc
+
+# Docker
+*.tar
+*.pid
+
+# VSCode
+.vscode/
+
+# Linux
+*.swp
+.DS_Store
+
+# Backups
+*.bak
+*.backup*

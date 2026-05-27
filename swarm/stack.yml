@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ferreteria_db
+      POSTGRES_USER: ferreteria_user
+      POSTGRES_PASSWORD: ferreteria_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - ferreteria_net
+    deploy:
+      replicas: 1
+
+  backend:
+    build: ../backend
+    image: ferreteria-backend:latest
+    environment:
+      DB_HOST: postgres
+      DB_USER: ferreteria_user
+      DB_PASSWORD: ferreteria_pass
+      DB_NAME: ferreteria_db
+    ports:
+      - "3000:3000"
+    networks:
+      - ferreteria_net
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          memory: 512M
+
+  frontend:
+    build: ../frontend
+    image: ferreteria-frontend:latest
+    ports:
+      - "80:80"
+    networks:
+      - ferreteria_net
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 256M
+
+  pyspark:
+    build: ../pyspark
+    image: ferreteria-pyspark:latest
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ferreteria_db
+      POSTGRES_USER: ferreteria_user
+      POSTGRES_PASSWORD: ferreteria_pass
+    networks:
+      - ferreteria_net
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 1G
+
+networks:
+  ferreteria_net:
+    driver: overlay
+
+volumes:
+  postgres_data:

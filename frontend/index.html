@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JC2 Ferretería - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: white; padding: 40px; border-radius: 10px; width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .login-card h1 { margin-bottom: 10px; color: #333; }
+        .login-card h2 { font-size: 14px; color: #666; margin-bottom: 30px; }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .login-card button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .login-card button:hover { background: #5a67d8; }
+        .error { color: #e74c3c; margin-top: 10px; font-size: 14px; }
+        .logo { font-size: 50px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">🔧</div>
+        <h1>JC2 Ferretería</h1>
+        <h2>Sistema de Ventas e Inventario</h2>
+        <input type="text" id="username" placeholder="Usuario" value="admin">
+        <input type="password" id="password" placeholder="Contraseña" value="admin123">
+        <button onclick="login()">Ingresar</button>
+        <div id="errorMsg" class="error"></div>
+    </div>
+
+    <script>
+        // Usar la URL completa de la API
+        const API_URL = window.location.origin + '/api';
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMsg');
+            
+            console.log('Intentando login con:', username);
+            
+            try {
+                // Probar diferentes endpoints
+                const endpoints = ['/api/auth/login', '/api/login'];
+                let data = null;
+                let success = false;
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+                        data = await response.json();
+                        if (data.success) {
+                            success = true;
+                            break;
+                        }
+                    } catch(e) {
+                        console.log('Endpoint fallido:', endpoint);
+                    }
+                }
+                
+                if (success && data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/inventario.html';
+                } else {
+                    errorDiv.textContent = data?.message || data?.error || 'Error de autenticación';
+                }
+            } catch(error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Error de conexión con el servidor';
+            }
+        }
+    </script>
+</body>
+</html>
