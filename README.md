@@ -62,18 +62,22 @@ docker run --rm --network ferreteria_net ferreteria-pyspark spark-submit --maste
 ### Estructura del Proyecto
 ```
 ferreteria-proyecto/
-├── docker-compose.yml
-├── Dockerfile
-├── Dockerfile.pyspark
-├── server.js
-├── public/
+├── backend/
+│   ├── Dockerfile
+│   ├── server.js
+│   └── package.json
+├── frontend/
+│   ├── Dockerfile
+│   ├── nginx.conf
 │   ├── index.html
-│   ├── inventario.html
-│   └── css/
-├── pyspark_jobs/
-│   └── analytics_masivo.py
+│   └── inventario.html
+├── pyspark/
+│   ├── Dockerfile
+│   └── jobs/
+│       └── analytics_masivo.py
+├── postgres/
+│   └── init.sql
 ├── swarm/
 │   └── stack.yml
-└── postgres/
-    └── init.sql
+└── docker-compose.yml
 ```
